@@ -53,6 +53,7 @@ from network import Network
 net = Network()
 net.send('127.0.0.1:9000', 'write', 'juan_cruz', 'connected')
 print(net.send('127.0.0.1:9001', 'read', 'juan_cruz'))
+connected
 "
 ```
 

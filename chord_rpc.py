@@ -5,22 +5,21 @@ import json
 from node import NodeRef
 
 
-class ChordJSONEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, NodeRef):
-            return {"__noderef__": True, "address": obj.address, "id": obj.id}
-        return super().default(obj)
+def encode_hook(obj):
+    if isinstance(obj, NodeRef):
+        return {"__noderef__": True, "address": obj.address, "id": obj.id}
+    raise TypeError(f"{type(obj).__name__} is not JSON serializable")
 
-def decode_hook(d):
-    if d.get("__noderef__"):
+def decode_hook(obj):
+    if obj.get("__noderef__"):
         ref = NodeRef.__new__(NodeRef)
-        ref.address = d["address"]
-        ref.id = d["id"]
+        ref.address = obj["address"]
+        ref.id = obj["id"]
         return ref
-    return d
+    return obj
 
 def dumps(obj):
-    return json.dumps(obj, cls=ChordJSONEncoder)
+    return json.dumps(obj, default=encode_hook)
 
 def loads(data):
     return json.loads(data, object_hook=decode_hook)

@@ -22,10 +22,6 @@ class Network:
             request = chord_rpc.dumps({"method": method_name, "args": list(args)}) + "\n"
             sock.sendall(request.encode("utf-8"))
             response_line = chord_rpc.read_line(sock)
-            # Parsing goes inside the try on purpose. If the peer accepts the connection
-            # and dies before answering, read_line returns "" and the parse fails with a
-            # ValueError (JSONDecodeError). Left outside, that error would escape as
-            # itself, and the callers only know how to recover from ConnectionError.
             response = chord_rpc.loads(response_line)
         except (ConnectionResetError, OSError, socket.timeout, ValueError):
             raise ConnectionError(f"Node at {address} is unreachable")

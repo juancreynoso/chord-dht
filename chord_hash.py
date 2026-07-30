@@ -14,14 +14,14 @@ def chord_hash(key, m=M):
 
 
 def short_id(id_):
-    """Last 6 hex digits of an identifier. Cosmetic only: m=160 ids are unreadable in full."""
+    """Last 6 hex digits of an identifier. Visual only (m=160 ids are unreadable)"""
     return format(id_, "x")[-6:] if id_ is not None else "None"
 
 
 def in_interval(x, start, end, m=M, inclusive_end= False):
     """
     Check if x is in the circular interval (start, end] (or (start, end) if inclusive_end=False)
-    on a ring of size 2**m. This handles wraparound.
+    on a ring of size 2**m. 
     """
     ring_size = 2 ** m
     start %= ring_size
@@ -29,7 +29,7 @@ def in_interval(x, start, end, m=M, inclusive_end= False):
     x %= ring_size
 
     if start == end:
-        # full circle case - everything is "in" the interval except the boundary node itself
+        # full circle
         return True if inclusive_end else x != start
 
     if start < end:

@@ -55,7 +55,7 @@ class Node:
             return self.successor
 
         if hops >= MAX_HOPS:
-            return self.ref  # stop bouncing
+            return self.ref
 
         # Try candidates from farthest finger to nearest,
         # if one is dead try the next best jump.
@@ -65,7 +65,7 @@ class Node:
             except ConnectionError:
                 continue
 
-        # Every finger is unreachable. Try with each node in the successors list.
+        # Every finger is unreachable. Try with each node in the successors list
         for succ in self.successor_list:
             if succ.id == self.id:
                 continue
@@ -103,28 +103,27 @@ class Node:
         """
         if self.predecessor is None:
             return
-        old_keys = {}
-        for k, e in list(self.data.items()):
-            if not in_interval(k, self.predecessor.id, self.id, self.m, inclusive_end=True):
-                old_keys[k] = e                    # not belongs to this node anymore
-        if not old_keys:
+        # check if there is keys not belongs to this node
+        payload = []
+        for key, entry in list(self.data.items()):
+            if not in_interval(key, self.predecessor.id, self.id, self.m, inclusive_end=True):
+                payload.append([key, entry["username"], entry["status"]])
+        if not payload:
             return
 
-        payload = [[k, e["username"], e["status"]] for k, e in old_keys.items()]
         try:
             self.network.send(self.predecessor.address, "receive_keys", payload)
         except ConnectionError:
             return  # predecessor unreachable: keep the keys and retry next cycle
 
-        # Only drop them once the new owner has confirmed it stored them. Deleting
-        # first would lose the keys if the handoff never arrived.
-        self._log(f"..{short_id(self.predecessor.id)} cubre ahora {len(old_keys)} clave(s)")
-        for k in old_keys:
-            self.data.pop(k, None)
+        # Only drop them once the new owner has confirmed it stored them
+        self._log(f"..{short_id(self.predecessor.id)} cubre ahora {len(payload)} clave(s)")
+        usernames = []
+        for key, username, status in payload:
+            self.data.pop(key, None)
+            usernames.append(username)
 
-        # The backups still tagged under this node's id have to go too: the new owner
-        # is pushing its own copies, and a leftover would outlive the handover.
-        usernames = [e["username"] for e in old_keys.values()]
+        # The backups still tagged under this node's id have to be deleted
         for succ in self.successor_list:
             if succ.id == self.id:
                 continue
@@ -154,8 +153,7 @@ class Node:
         try:
             self.network.send(owner.address, "write_local", username, status)
         except ConnectionError:
-            # Owner died mid-write. Re-resolve (routing skips dead hops) and retry
-            # once against whoever inherited the range.
+            # Owner died while writting, try again.
             self._log(f"owner ..{short_id(owner.id)} cayo durante write({username}) -> reintentando")
             retry_owner = self.find_successor(key)
             self.network.send(retry_owner.address, "write_local", username, status)
@@ -210,7 +208,7 @@ class Node:
                     self.network.send(ref.address, "drop_replica", usernames, self.ref)
                     self._log(f"..{short_id(id_)} salio de mi successor list -> descartando mis replicas ahi")
                 except ConnectionError:
-                    pass  # unreachable anyway, its copies die with it
+                    pass
 
         self.replica_targets = targets
 
@@ -271,9 +269,9 @@ class Node:
 
     def stabilize(self):
         """
-        Checks whether the successor's own predecessor is a better
-        fit, and refresh the successor list. If the successor turns out to be dead,
-        promote the next candidate in the successor list instead of getting stuck.
+        Checks whether the predecessor of the successor is a better option
+        and refresh the successor list. If the successor turns out to be dead,
+        promote the next candidate in the successor list.
         """
         while True:
             try:
@@ -282,13 +280,13 @@ class Node:
                 break
             except ConnectionError:
                 if len(self.successor_list) > 1:
-                    # successor is dead. Drop it and promote the next one already known
+                    # successor is dead. Drop it and promote the next one
                     dead_id = self.successor.id
                     self.successor_list.pop(0)
                     self.successor = self.successor_list[0]
                     self._log(f"successor ..{short_id(dead_id)} caido -> promoviendo successor ..{short_id(self.successor.id)}")
                 else:
-                    # no fallback known (shouldn't happen in a healthy ring with enough replicas)
+                    # no fallback known
                     self._log("successor caido y no hay fallback conocido (ring degradado)")
                     self.successor = self.ref
                     self.successor_list = [self.ref]
@@ -375,7 +373,7 @@ class Node:
                 f"predecessor={self.predecessor.id if self.predecessor else None})")
 
     def get_debug_state(self):
-        """Remote-inspectable snapshot of this node's state, keyed by username for readability."""
+        """View of this node's state."""
         return {
             "id": self.id,
             "successor": self.successor.id,
