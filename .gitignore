@@ -4,12 +4,3 @@ __pycache__/
 
 # macOS
 .DS_Store
-
-# LaTeX (por si volvés a compilar acá)
-*.aux
-*.log
-*.out
-*.toc
-*.synctex.gz
-*.fdb_latexmk
-*.fls
