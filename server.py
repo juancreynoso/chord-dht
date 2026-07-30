@@ -56,7 +56,7 @@ class ChordServer(socketserver.ThreadingTCPServer):
     daemon_threads = True
 
 
-def periodic(name: str, fn, interval: float, log):
+def periodic(name, fn, interval, log):
     """Call fn() every interval seconds forever."""
     while True:
         try:
@@ -66,7 +66,7 @@ def periodic(name: str, fn, interval: float, log):
         time.sleep(interval)
 
 
-def start_maintenance(node: Node, log):
+def start_maintenance(node, log):
     jobs = [
         ("stabilize", node.stabilize, STABILIZE_INTERVAL),
         ("fix_fingers", node.fix_fingers, FIX_FINGERS_INTERVAL),

@@ -13,7 +13,7 @@ class NodeRef:
     This is stored in successor/predecessor/finger table slots,
     instead of a full Node object.
     """
-    def __init__(self, address: str, m: int = M):
+    def __init__(self, address, m= M):
         self.address = address
         self.id = chord_hash(address, m)
 
@@ -22,13 +22,13 @@ class NodeRef:
 
 
 class Node:
-    def __init__(self, address: str, network, m=M, num_replicas=2, log_fn=None):
+    def __init__(self, address, network, m=M, num_replicas=2, log_fn=None):
         self.m = m
         self.ref = NodeRef(address, m)
         self.id = self.ref.id
         self.network = network
         self.num_replicas = num_replicas  # size of the successor list
-        self._log = log_fn
+        self._log = log_fn or (lambda msg: None)  # silent if no logger was given
 
         # A single node in the ring is its own successor, and has no predecessor yet.
         self.successor = self.ref
@@ -48,7 +48,7 @@ class Node:
         # id -> NodeRef of the nodes currently believed to hold backups of this node's keys.
         self.replica_targets = {}
 
-    def find_successor(self, id_: int, hops=0) -> NodeRef:
+    def find_successor(self, id_, hops=0):
         """Finds who is responsible for the id."""
         # The id is in this node's range, so the responsible for it is its successor.
         if in_interval(id_, self.id, self.successor.id, self.m, inclusive_end=True):
@@ -76,7 +76,7 @@ class Node:
 
         return self.ref
 
-    def closest_preceding_candidates(self, id_: int) -> list:
+    def closest_preceding_candidates(self, id_):
         """
         Every finger table entry that precedes id_, ordered from farthest to nearest.
         """
@@ -90,7 +90,7 @@ class Node:
                 candidates.append(finger)
         return candidates
 
-    def join(self, existing_address: str):
+    def join(self, existing_address):
         """
         Join the ring through a node that is already a member.
         """
@@ -133,7 +133,7 @@ class Node:
             except ConnectionError:
                 pass
 
-    def receive_keys(self, entries: list):
+    def receive_keys(self, entries):
         """
         Accept keys sended from the node that was covering this range.
         """
@@ -143,7 +143,7 @@ class Node:
 
     VALID_STATUS = {"connected", "disconnected"}
 
-    def write(self, username: str, status: str):
+    def write(self, username, status):
         """Entry point a client can call on any node: write(k,v). Stores a user status."""
         if status not in self.VALID_STATUS:
             raise ValueError(f"invalid status: {status!r} (must be 'connected' or 'disconnected')")
@@ -160,7 +160,7 @@ class Node:
             retry_owner = self.find_successor(key)
             self.network.send(retry_owner.address, "write_local", username, status)
 
-    def write_local(self, username: str, status: str):
+    def write_local(self, username, status):
         """Stores in this node's primary table and replicates the backup to its successors."""
         if status not in self.VALID_STATUS:
             raise ValueError(f"invalid status: {status!r} (must be connected or disconnected)")
@@ -169,7 +169,7 @@ class Node:
         self.data[key] = {"username": username, "status": status}
         self.replicate(username, status)
 
-    def replicate(self, username: str, status: str):
+    def replicate(self, username, status):
         """Pushes a backup copy of this key to its successor list."""
         for succ in self.successor_list:
             if succ.id != self.id:
@@ -178,7 +178,7 @@ class Node:
                 except ConnectionError:
                     pass  # successor is down
 
-    def store_replica(self, username: str, status: str, owner: NodeRef):
+    def store_replica(self, username, status, owner):
         """Stores a backup copy, separate from its own primary data."""
         key = chord_hash(username, self.m)
         self.replicas[key] = {"username": username, "status": status, "owner": owner.id}
@@ -214,7 +214,7 @@ class Node:
 
         self.replica_targets = targets
 
-    def drop_replica(self, usernames: list, owner: NodeRef):
+    def drop_replica(self, usernames, owner):
         """
         Called on a replica holder when a node no longer owns these keys (a new node
         joined and took over that slice of the ring).
@@ -225,7 +225,7 @@ class Node:
             if existing and existing["owner"] == owner.id:
                 self.replicas.pop(key, None)
 
-    def read(self, username: str):
+    def read(self, username):
         """Entry point a client can call on any node: read(k). Check a user status."""
         key = chord_hash(username, self.m)
         owner = self.find_successor(key)
@@ -236,7 +236,7 @@ class Node:
             self._log(f"owner ..{short_id(owner.id)} no responde para read({username}) -> buscando replica")
             return self.read_from_replica_holders(username, owner)
 
-    def read_from_replica_holders(self, username: str, dead_owner: NodeRef):
+    def read_from_replica_holders(self, username, dead_owner):
         probe = dead_owner.id
         for _ in range(self.num_replicas):
             holder = self.find_successor((probe + 1) % (2 ** self.m))
@@ -251,7 +251,7 @@ class Node:
             probe = holder.id
         return None
 
-    def read_local(self, username: str):
+    def read_local(self, username):
         """
         Answer from this node's primary data.
         """
@@ -262,7 +262,7 @@ class Node:
     def get_predecessor(self):
         return self.predecessor
 
-    def notify(self, candidate: NodeRef):
+    def notify(self, candidate):
         """Another node thinks it might be this node's predecessor."""
         if self.predecessor is None or in_interval(candidate.id, self.predecessor.id, self.id, self.m):
             if self.predecessor is None or self.predecessor.id != candidate.id:

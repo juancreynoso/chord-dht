@@ -19,13 +19,13 @@ def decode_hook(d):
         return ref
     return d
 
-def dumps(obj) -> str:
+def dumps(obj):
     return json.dumps(obj, cls=ChordJSONEncoder)
 
-def loads(data: str):
+def loads(data):
     return json.loads(data, object_hook=decode_hook)
 
-def read_line(sock) -> str:
+def read_line(sock):
     """Read from a socket until a newline, return the decoded line (without the newline)."""
     chunks = []
     while True:
