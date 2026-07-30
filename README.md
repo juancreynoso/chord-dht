@@ -6,8 +6,7 @@ mantener el estado (`conectado`/`desconectado`) de usuarios,
 distribuido entre nodos, con costo de búsqueda logarítmico y tolerancia a
 fallas sin pérdida de datos.
 
-El documento completo de arquitectura, algoritmos, formato de mensajes,
-supuestos, limitaciones y la demostración semi-formal de las propiedades
+El documento completo de arquitectura, algoritmos, formato de mensajes y demostración de las propiedades
 requeridas está en [`documentacion.pdf`](./documentacion.pdf).
 
 ## Requisitos
@@ -25,7 +24,7 @@ requeridas está en [`documentacion.pdf`](./documentacion.pdf).
 | `server.py` | Levanta un nodo como proceso independiente, escuchando en un puerto |
 
 ## Ejecución
-Cada proceso, al recibir eventos importantes (join, cambio de sucesor/predecesor,
+Cada proceso, al recibir eventos (join, cambio de sucesor/predecesor,
 detección de una falla, promoción de una réplica a dato primario), los va
 imprimiendo por su cuenta. No hace falta consultar nada aparte para ver que
 el anillo se está corrigiendo solo.

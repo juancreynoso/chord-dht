@@ -43,9 +43,9 @@ class Node:
         self.data = {}
         # Backup copies of other predecessors' keys.
         self.replicas = {}
-        # count failed pings to this node's predecessor.
+        # count failed pings to this node's predecessor
         self.failed_pings = 0
-        # id -> NodeRef of the nodes currently believed to hold backups of this node's keys.
+        # nodes are holding backups of this node's keys
         self.replica_targets = {}
 
     def find_successor(self, id_, hops=0):
@@ -185,9 +185,9 @@ class Node:
         """
         Runs at the end of stabilize(). It works just if the successor list changed.
         """
-        targets = {s.id: s for s in self.successor_list if s.id != self.id}
-        if targets.keys() == self.replica_targets.keys():
-            return  # nobody entered or left the list, nothing to fix
+        targets = {s.id: s for s in self.successor_list if s.id != self.id} # who has to have these node's copies? (actual successors)
+        if targets.keys() == self.replica_targets.keys(): # actual successors =? suppossed actual succesors
+            return
 
         entries = list(self.data.values())
         if entries:
@@ -196,8 +196,7 @@ class Node:
                 self._log(f"..{short_id(id_)} entró a mi successor list -> replicando {len(entries)} clave(s)")
                 for e in entries:
                     try:
-                        self.network.send(ref.address, "store_replica",
-                                          e["username"], e["status"], self.ref)
+                        self.network.send(ref.address, "store_replica", e["username"], e["status"], self.ref)
                     except ConnectionError:
                         break  # it just died; the next stabilize will drop it from the list
 
@@ -206,7 +205,7 @@ class Node:
                 ref = self.replica_targets[id_]  # left the list, its copies are stale now
                 try:
                     self.network.send(ref.address, "drop_replica", usernames, self.ref)
-                    self._log(f"..{short_id(id_)} salio de mi successor list -> descartando mis replicas ahi")
+                    self._log(f"..{short_id(id_)} salió de mi successor list -> descartando mis replicas ahi")
                 except ConnectionError:
                     pass
 
@@ -215,7 +214,7 @@ class Node:
     def drop_replica(self, usernames, owner):
         """
         Called on a replica holder when a node no longer owns these keys (a new node
-        joined and took over that slice of the ring).
+        joined and have that slice of the ring).
         """
         for username in usernames:
             key = chord_hash(username, self.m)
