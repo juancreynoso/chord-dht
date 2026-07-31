@@ -1,5 +1,5 @@
 """
-JSON encode/decode utilities for sending Chord RPC messages through real sockets.
+JSON encode/decode utilities for sending RPC messages through real sockets.
 """
 import json
 from node import NodeRef
