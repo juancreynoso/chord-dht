@@ -17,10 +17,10 @@ requeridas está en [`documentacion.pdf`](./documentacion.pdf).
 
 | Archivo | Rol |
 |---|---|
-| `chord_hash.py` | Hashing consistente (SHA-1) e intervalos circulares |
+| `identifiers.py` | Hashing consistente (SHA-1), identificadores e intervalos circulares |
 | `node.py` | Lógica del protocolo Chord: `find_successor`, `join`, `stabilize`, `fix_fingers`, replicación, `check_predecessor` |
 | `network.py` | Transporte sobre sockets TCP (`send(address, method, *args)`) |
-| `chord_rpc.py` | Serialización JSON de los mensajes RPC |
+| `rpc.py` | Serialización JSON de los mensajes RPC |
 | `server.py` | Levanta un nodo como proceso independiente, escuchando en un puerto |
 
 ## Ejecución

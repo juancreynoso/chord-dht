@@ -2,7 +2,7 @@
 Network transport for Chord, over TCP sockets.
 """
 import socket
-import chord_rpc
+import rpc
 
 
 class Network:
@@ -19,10 +19,10 @@ class Network:
             raise ConnectionError(f"Node at {address} is unreachable")
 
         try:
-            request = chord_rpc.dumps({"method": method_name, "args": list(args)}) + "\n"
+            request = rpc.dumps({"method": method_name, "args": list(args)}) + "\n"
             sock.sendall(request.encode("utf-8"))
-            response_line = chord_rpc.read_line(sock)
-            response = chord_rpc.loads(response_line)
+            response_line = rpc.read_line(sock)
+            response = rpc.loads(response_line)
         except (ConnectionResetError, OSError, socket.timeout, ValueError):
             raise ConnectionError(f"Node at {address} is unreachable")
         finally:

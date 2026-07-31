@@ -11,8 +11,8 @@ import threading
 import time
 import sys
 
-import chord_rpc
-from chord_hash import short_id
+import rpc
+from identifiers import short_id
 from node import Node
 from network import Network
 
@@ -31,10 +31,10 @@ ALLOWED_METHODS = {
 class ChordRequestHandler(socketserver.BaseRequestHandler):
     def handle(self):
         try:
-            line = chord_rpc.read_line(self.request)
+            line = rpc.read_line(self.request)
             if not line:
                 return
-            msg = chord_rpc.loads(line)
+            msg = rpc.loads(line)
             method_name = msg["method"]
             args = msg.get("args", [])
             node = self.server.node
@@ -46,7 +46,7 @@ class ChordRequestHandler(socketserver.BaseRequestHandler):
         except Exception as e:
             response = {"error": f"{type(e).__name__}: {e}"}
         try:
-            self.request.sendall((chord_rpc.dumps(response) + "\n").encode("utf-8"))
+            self.request.sendall((rpc.dumps(response) + "\n").encode("utf-8"))
         except OSError:
             pass 
 

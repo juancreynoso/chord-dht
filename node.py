@@ -1,4 +1,4 @@
-from chord_hash import chord_hash, in_interval, short_id, M
+from identifiers import chord_hash, in_interval, short_id, M
 
 
 # A lookup should take O(log N) hops. This limit only exists to avoid bouncing forever.
