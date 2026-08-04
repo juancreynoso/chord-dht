@@ -98,14 +98,14 @@ def main():
 
     server_thread = threading.Thread(target=server.serve_forever, daemon=True)
     server_thread.start()
-    log(f"listening (id=..{short_id(node.id)})")
+    log(f"listening (id={short_id(node.id)})")
 
     # give the socket a moment before start hammering it with our own join request
     time.sleep(0.2)
 
     if args.join:
         node.join(args.join)
-        log(f"joined ring through {args.join} -> successor=..{short_id(node.successor.id)}")
+        log(f"joined ring through {args.join} -> successor={short_id(node.successor.id)}")
     else:
         node.join(address)
         log("creating new ring")

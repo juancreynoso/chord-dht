@@ -15,7 +15,10 @@ def chord_hash(key, m=M):
 
 def short_id(id_):
     """Last 6 hex digits of an identifier. Visual only (m=160 ids are unreadable)"""
-    return format(id_, "x")[-6:] if id_ is not None else "None"
+    if id_ is None:
+        return "None"
+    hex_id = format(id_, "x") if len(str(id_)) > 10 else id_
+    return ".." + hex_id[-6:] if len(str(hex_id)) > 6 else hex_id
 
 
 def in_interval(x, start, end, m=M, inclusive_end= False):

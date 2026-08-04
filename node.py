@@ -117,7 +117,7 @@ class Node:
             return  # predecessor unreachable: keep the keys and retry next cycle
 
         # Only drop them once the new owner has confirmed it stored them
-        self._log(f"..{short_id(self.predecessor.id)} cubre ahora {len(payload)} clave(s)")
+        self._log(f"{short_id(self.predecessor.id)} cubre ahora {len(payload)} clave(s)")
         usernames = []
         for key, username, status in payload:
             self.data.pop(key, None)
@@ -148,13 +148,13 @@ class Node:
             raise ValueError(f"invalid status: {status!r} (must be 'connected' or 'disconnected')")
         key = chord_hash(username, self.m)
         owner = self.find_successor(key)
-        self._log(f"cliente solicita write({username}) -> reenviando a owner ..{short_id(owner.id)}")
+        self._log(f"cliente solicita write({username}) -> reenviando a owner {short_id(owner.id)}")
 
         try:
             self.network.send(owner.address, "write_local", username, status)
         except ConnectionError:
             # Owner died while writting, try again.
-            self._log(f"owner ..{short_id(owner.id)} cayo durante write({username}) -> reintentando")
+            self._log(f"owner {short_id(owner.id)} cayo durante write({username}) -> reintentando")
             retry_owner = self.find_successor(key)
             self.network.send(retry_owner.address, "write_local", username, status)
 
@@ -193,7 +193,7 @@ class Node:
         if entries:
             for id_ in targets.keys() - self.replica_targets.keys():
                 ref = targets[id_]   # just entered the list, so it has none of these keys
-                self._log(f"..{short_id(id_)} entró a mi successor list -> replicando {len(entries)} clave(s)")
+                self._log(f"{short_id(id_)} entró a mi successor list -> replicando {len(entries)} clave(s)")
                 for e in entries:
                     try:
                         self.network.send(ref.address, "store_replica", e["username"], e["status"], self.ref)
@@ -205,7 +205,7 @@ class Node:
                 ref = self.replica_targets[id_]  # left the list, its copies are stale now
                 try:
                     self.network.send(ref.address, "drop_replica", usernames, self.ref)
-                    self._log(f"..{short_id(id_)} salió de mi successor list -> descartando mis replicas ahi")
+                    self._log(f"{short_id(id_)} salió de mi successor list -> descartando mis replicas ahi")
                 except ConnectionError:
                     pass
 
@@ -230,7 +230,7 @@ class Node:
             return self.network.send(owner.address, "read_local", username)
         except ConnectionError:
             # The owner died and nobody has noticed yet, ask successors to read replicas.
-            self._log(f"owner ..{short_id(owner.id)} no responde para read({username}) -> buscando replica")
+            self._log(f"owner {short_id(owner.id)} no responde para read({username}) -> buscando replica")
             return self.read_from_replica_holders(username, owner)
 
     def read_from_replica_holders(self, username, dead_owner):
@@ -263,7 +263,7 @@ class Node:
         """Another node thinks it might be this node's predecessor."""
         if self.predecessor is None or in_interval(candidate.id, self.predecessor.id, self.id, self.m):
             if self.predecessor is None or self.predecessor.id != candidate.id:
-                self._log(f"predecessor -> ..{short_id(candidate.id)}")
+                self._log(f"predecessor -> {short_id(candidate.id)}")
             self.predecessor = candidate # this node has a new predecessor
 
     def stabilize(self):
@@ -283,7 +283,7 @@ class Node:
                     dead_id = self.successor.id
                     self.successor_list.pop(0)
                     self.successor = self.successor_list[0]
-                    self._log(f"successor ..{short_id(dead_id)} caido -> promoviendo successor ..{short_id(self.successor.id)}")
+                    self._log(f"successor {short_id(dead_id)} caido -> promoviendo successor {short_id(self.successor.id)}")
                 else:
                     # no fallback known
                     self._log("successor caido y no hay fallback conocido (ring degradado)")
@@ -299,7 +299,7 @@ class Node:
             except ConnectionError:
                 x_list = None
             if x_list is not None:
-                self._log(f"successor -> ..{short_id(x.id)}")
+                self._log(f"successor -> {short_id(x.id)}")
                 self.successor = x
                 succ_list = x_list
 
@@ -341,9 +341,9 @@ class Node:
         inherited = {k: v for k, v in self.replicas.items() if v["owner"] == dead.id}
 
         if inherited:
-            self._log(f"predecessor ..{short_id(dead.id)} caido -> promoviendo {len(inherited)} clave(s) de replica a dato primario")
+            self._log(f"predecessor {short_id(dead.id)} caido -> promoviendo {len(inherited)} clave(s) de replica a dato primario")
         else:
-            self._log(f"predecessor ..{short_id(dead.id)} caido")
+            self._log(f"predecessor {short_id(dead.id)} caido")
 
         # Now replicas are the real data for this node
         for key, entry in inherited.items():
