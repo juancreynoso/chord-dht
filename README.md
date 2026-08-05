@@ -1,50 +1,49 @@
-# Chord DHT — Sistema distribuido de estado de usuarios
+# Chord DHT — Distributed User Presence System
 
-Implementación de una tabla de hash distribuida (DHT) basada en **Chord**, 
-para el proyecto de aprobación de *Telecomunicaciones y Sistemas Distribuidos (UNRC)*:
-mantener el estado (`conectado`/`desconectado`) de usuarios,
-distribuido entre nodos, con costo de búsqueda logarítmico y tolerancia a
-fallas sin pérdida de datos.
+Implementation of a distributed hash table (DHT) based on **Chord**, built for the
+qualifying project of *Telecomunicaciones y Sistemas Distribuidos (UNRC)*: keeping
+user status (`connected`/`disconnected`) distributed across nodes, with logarithmic
+lookup cost and fault tolerance without data loss.
 
-El documento completo de arquitectura, algoritmos, formato de mensajes y demostración de las propiedades
-requeridas está en [`documentacion.pdf`](./documentacion.pdf).
+The full write-up on architecture, algorithms, message format and the demonstration
+of the required properties is in [`documentacion.pdf`](./documentacion.pdf) (in Spanish).
 
-## Requisitos
+## Requirements
 
 - Python 3.10+.
 
-## Estructura del proyecto
+## Project structure
 
-| Archivo | Rol |
+| File | Role |
 |---|---|
-| `identifiers.py` | Hashing consistente (SHA-1), identificadores e intervalos circulares |
-| `node.py` | Lógica del protocolo Chord: `find_successor`, `join`, `stabilize`, `fix_fingers`, replicación, `check_predecessor` |
-| `network.py` | Transporte sobre sockets TCP (`send(address, method, *args)`) |
-| `rpc.py` | Serialización JSON de los mensajes RPC |
-| `server.py` | Levanta un nodo como proceso independiente, escuchando en un puerto |
+| `identifiers.py` | Consistent hashing (SHA-1), identifiers and circular intervals |
+| `node.py` | Chord protocol logic: `find_successor`, `join`, `stabilize`, `fix_fingers`, replication, `check_predecessor` |
+| `network.py` | Transport over TCP sockets (`send(address, method, *args)`) |
+| `rpc.py` | JSON serialization of RPC messages |
+| `server.py` | Runs a node as an independent process, listening on a port |
 
-## Ejecución
-Cada proceso, al recibir eventos (join, cambio de sucesor/predecesor,
-detección de una falla, promoción de una réplica a dato primario), los va
-imprimiendo por su cuenta. No hace falta consultar nada aparte para ver que
-el anillo se está corrigiendo solo.
+## Running it
+
+Each process prints its own events as they happen (join, successor/predecessor
+change, failure detection, promoting a replica to primary data). No extra tooling
+is needed to see the ring correcting itself.
 
 ```bash
-# Terminal 1: primer nodo, inicia su propio anillo
+# Terminal 1: first node, starts its own ring
 python3 server.py --port 9000
 
-# Terminal 2: se une a través del primero
+# Terminal 2: joins through the first one
 python3 server.py --port 9001 --join 127.0.0.1:9000
 
-# Terminal 3, 4, 5...: cada uno se une a través de cualquier nodo ya existente
+# Terminal 3, 4, 5...: each joins through any existing node
 python3 server.py --port 9002 --join 127.0.0.1:9000
 ```
 
-Para terminar o simular un crash de un nodo: `Ctrl+C` o `kill -9 <pid>` desde otra terminal.
+To stop a node, or simulate a crash: `Ctrl+C`, or `kill -9 <pid>` from another terminal.
 
-### Interactuar con el anillo
+### Talking to the ring
 
-La forma más directa es una llamada Python de una línea desde una nueva terminal:
+The most direct way is a one-line Python call from a new terminal:
 
 ```bash
 python3 -c "
@@ -56,10 +55,9 @@ connected
 "
 ```
 
-## Pruebas
+## Testing
 
-Se realizó una demostración completa (formación de un anillo con siete nodos, escrituras y
-lecturas de datos desde nodos arbitrarios, alta de un nodo en caliente y caída del nodo
-dueño de una clave) que se encuentra documentada
-en la sección **Demostración de ejecución** de
+A full demonstration was carried out (forming a seven-node ring, writes and reads
+from arbitrary nodes, hot-joining a node, and the crash of the node owning a key),
+documented in the *Demostración de ejecución* (execution walkthrough) section of
 [`documentacion.pdf`](./documentacion.pdf).
